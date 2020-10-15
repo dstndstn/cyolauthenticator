@@ -40,14 +40,15 @@ fi
 # # assumed to be stored in /nfs/sys/svc.json
 # export GOOGLE_APPLICATION_CREDENTIALS="/nfs/sys/svc.json"
 
+gcloud config configurations create hub-config
+gcloud config configurations activate hub-config
+
 # activate gcp powers!
 gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
 
 # GCP Project name.
-gcloud projects describe schrodingers-hack
+gcloud projects describe $GCP_PROJECT
 
-gcloud config configurations create hub-config
-gcloud config configurations activate hub-config
 gcloud config set project $GCP_PROJECT
 gcloud config set compute/zone $GCP_ZONE
 
