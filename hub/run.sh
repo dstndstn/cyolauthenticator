@@ -44,9 +44,7 @@ fi
 gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
 
 # GCP Project name.
-# You may need to do (interactively, unfortunately...)
-#   gcloud projects describe schrodingers-hack
-# before the following works.
+gcloud projects describe schrodingers-hack
 
 gcloud config configurations create hub-config
 gcloud config configurations activate hub-config

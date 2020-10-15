@@ -55,7 +55,7 @@ RUN echo "slapd slapd/domain string hub" | debconf-set-selections && \
     echo "slapd slapd/password1 password XXX" | debconf-set-selections && \
     echo "slapd slapd/password2 password XXX" | debconf-set-selections && \
     echo "libpam-runtime  libpam-runtime/profiles multiselect     unix, ldap" | debconf-set-selections && \
-    DEBIAN_FRONTEND=noninteractive dpkg-reconfigure slapd libpam-runtime
+    dpkg-reconfigure slapd libpam-runtime
 
 # Copy service account credentials!
 # We instead assume the key is in /nfs/sys/svc.json
@@ -93,6 +93,8 @@ RUN echo "/nfs/home 10.0.0.0/8(rw,async,no_subtree_check,root_squash)" > /etc/ex
 ## Error JSONifying event causes spawn to fail
 COPY jupyterhub.patch /
 RUN cat jupyterhub.patch | (cd /usr/local/lib/python3.6/dist-packages && patch -p 1)
+
+COPY nfs-pv.yaml nfs-pvc.yaml /
 
 # This list of EXPOSEd ports is not complete (and not required when running in Google Compute Engine)
 EXPOSE 80
