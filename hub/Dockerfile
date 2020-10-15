@@ -1,8 +1,10 @@
 FROM ubuntu:18.04
 USER root
 
-RUN apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+  apt install -y --no-install-recommends apt-utils && \
+  apt install -y --no-install-recommends \
   python3 python3-pip openssh-client \
   libssl1.0-dev nodejs-dev node-gyp npm \
   gnupg policycoreutils python3-pam imagemagick curl vim wget \
@@ -19,9 +21,13 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
 # the jupyterhub process and the notebook servers.
 RUN pip install --no-cache-dir setuptools && \
     pip install --no-cache-dir \
-    oauthenticator==0.9.0 jupyter==1.0.0 jupyterhub==1.0.0 \
-    tornado==5.1.1 python-oauth2==1.1.1 \
-    jupyterhub-dummyauthenticator notebook==6.0.2 \
+    oauthenticator==0.9.0 \
+    jupyter==1.0.0 \
+    jupyterhub==1.0.0 \
+    tornado==5.1.1 \
+    python-oauth2==1.1.1 \
+    jupyterhub-dummyauthenticator \
+    notebook==6.0.2 \
     kubernetes==9.0.1
 
 # For jupyterhub
@@ -38,7 +44,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - && \
     apt update && apt install -y google-cloud-sdk kubectl
 
-# Initialize LDAP server setup; we reset the password in startup.sh
+# Initialize LDAP server setup; we reset the password in run.sh
 RUN echo "slapd slapd/domain string hub" | debconf-set-selections && \
     echo "slapd slapd/purge_database boolean true" | debconf-set-selections && \
     echo "slapd slapd/move_old_database boolean true" | debconf-set-selections && \
@@ -53,7 +59,7 @@ RUN echo "slapd slapd/domain string hub" | debconf-set-selections && \
 
 # Copy service account credentials!
 # We instead assume the key is in /nfs/sys/svc.json
-# and authorize in startup.sh
+# and authorize in run.sh
 #COPY research-technologies-testbed-a786f12c5112.json /svc.json
 
 ## Convenience: ssh direct to root@hub with key...
@@ -80,7 +86,7 @@ COPY login.html error.html /usr/local/share/jupyterhub/templates/
 # Replace logo.png with whatever logo you wish to use to brand the server
 COPY pi-logo.png /usr/local/share/jupyterhub/static/images/logo.png
 
-COPY startup.sh inituser.sh jup-config.py startup-log.sh /
+COPY run.sh run-log.sh inituser.sh jup-config.py /
 COPY codeword.txt /usr/enable_mkuser
 RUN echo "/nfs/home 10.0.0.0/8(rw,async,no_subtree_check,root_squash)" > /etc/exports
 
