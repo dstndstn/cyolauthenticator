@@ -27,6 +27,17 @@ To disable creation of logins, remove `/usr/enable_mkuser`.
 Note that you will also need a custom `login.html` page. See the docker
 directory for how to do this.
 
+## Building the "hub" container image
+
+- Create an ssh public key that you want to use for root logins; copy it
+  to `hub/id_root_hub.pub`
+
+- Copy `cyolauthenticator/*` to `hub/`
+
+- Create a `codeword.txt` file containing the "secret code" users need to know to log in.
+
+- `cd hub && docker build .`
+
 ## Google Cloud Platform Setup instructions
 
 - in Google Kubernetes Engine, create a cluster to run your notebook
