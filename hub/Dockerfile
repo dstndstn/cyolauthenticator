@@ -63,9 +63,6 @@ RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 # Create your own key with ssh-keygen -f id_root_hub ...
 COPY id_root_hub.pub /root/.ssh/authorized_keys
 
-# Add firewall entry for port 2222:
-# gcloud compute --project=research-technologies-testbed firewall-rules create allow-2222 --direction=INGRESS --priority=1000 --network=default --action=ALLOW --rules=tcp:2222 --source-ranges=0.0.0.0/0
-
 # append
 RUN echo "BASE dc=hub\nURI ldap://hub\n" >> /etc/ldap/ldap.conf
 COPY nsswitch.conf /etc
@@ -86,7 +83,6 @@ COPY pi-logo.png /usr/local/share/jupyterhub/static/images/logo.png
 COPY startup.sh inituser.sh jup-config.py startup-log.sh /
 COPY codeword.txt /usr/enable_mkuser
 RUN echo "/nfs/home 10.0.0.0/8(rw,async,no_subtree_check,root_squash)" > /etc/exports
-#COPY jup-config-tst.py /jup-config-tst.py
 
 ## Error JSONifying event causes spawn to fail
 COPY jupyterhub.patch /
@@ -101,5 +97,5 @@ EXPOSE 2222
 EXPOSE 2049/tcp
 EXPOSE 20048/tcp
 
-CMD bash startup-log.sh
+CMD bash run-log.sh
 
