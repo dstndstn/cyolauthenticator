@@ -5,16 +5,40 @@ cd /
 service ssh start
 service rsyslog start
 
-# Set this to the Google Cloud Platform project name
+# The way environment variables get passed to GCE containers,
+# they appear (only) in the "main" process, not in subsequent
+# ssh connections, etc.  So save the variable values if we haven't already.
+if [ -f /envvars ]; then
+    . /envvars
+else
+    cat > /envvars <<EOF
+export GCP_PROJECT=${GCP_PROJECT}
+export GCP_ZONE=${GCP_ZONE}
+export CLUSTER_NAME=${CLUSTER_NAME}
+export GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+export NOTEBOOK_CONTAINER=${NOTEBOOK_CONTAINER}
+export TUTORIAL_SECRET_CODE=${TUTORIAL_SECRET_CODE}
+EOF
+fi
 
-export GCP_PROJECT=schrodingers-hack
-export GCP_ZONE=us-central1-c
-# Kubernetes cluster
-export CLUSTER_NAME=cluster-1
+# Set the secret code word
+if [ x$TUTORIAL_SECRET_CODE != x ]; then
+    echo $TUTORIAL_SECRET_CODE > /usr/enable_mkuser
+fi
 
-# Authorize to use kubernetes using service account,
-# assumed to be stored in /nfs/sys/svc.json
-export GOOGLE_APPLICATION_CREDENTIALS="/nfs/sys/svc.json"
+# Set the notebook container
+if [ x$NOTEBOOK_CONTAINER != x ]; then
+    cat /jup-config-template.py | sed "s+NOTEBOOK_CONTAINER+${NOTEBOOK_CONTAINER}+g" > /jup-config.py
+fi
+
+# # Set this to the Google Cloud Platform project name
+# export GCP_PROJECT=schrodingers-hack
+# export GCP_ZONE=us-central1-c
+# # Kubernetes cluster
+# export CLUSTER_NAME=cluster-1
+# # Authorize to use kubernetes using service account,
+# # assumed to be stored in /nfs/sys/svc.json
+# export GOOGLE_APPLICATION_CREDENTIALS="/nfs/sys/svc.json"
 
 # activate gcp powers!
 gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS
