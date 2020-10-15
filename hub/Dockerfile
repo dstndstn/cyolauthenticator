@@ -10,7 +10,7 @@ RUN apt update && \
   gnupg policycoreutils python3-pam imagemagick curl vim wget \
   apt-transport-https ca-certificates git less \
   nfs-server iputils-ping emacs-nox debconf-utils \
-  slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch \
+  slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch rsyslog \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Make python3 the default
