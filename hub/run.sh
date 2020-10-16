@@ -115,6 +115,6 @@ for ((;;)); do
   else
       PORT=80
   fi
-  jupyterhub --port $PORT -f jup-config.py > jupyterhub.log 2>&1
-  sleep 10
+  jupyterhub --port $PORT -f jup-config.py >> jupyterhub.log 2>&1
+  sleep 5
 done

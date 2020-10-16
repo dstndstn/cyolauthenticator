@@ -6,6 +6,19 @@ c.JupyterHub.template_paths = ['/jinja/templates']
 # eg from https://github.com/GoogleCloudPlatform/gke-jupyter-classroom/blob/master/jupyterhub/jupyterhub_config.py
 c.JupyterHub.hub_ip = '0.0.0.0'
 
+# Cull idle users -- for this to really work, also need client-side auto-shutdown
+c.JupyterHub.services = [
+    {
+        'name': 'idle-culler',
+        'admin': True,
+        'command': [
+            sys.executable,
+            '-m', 'jupyterhub_idle_culler',
+            '--timeout=3600'
+        ],
+    }
+]
+
 import kubespawner
 c.JupyterHub.spawner_class = 'kubespawner.KubeSpawner'
 c.KubeSpawner.debug = True
@@ -35,6 +48,11 @@ c.KubeSpawner.volumes = [
 c.KubeSpawner.volume_mounts = [
     dict(name='nfs2', mountPath='/nfs/home'),
 ]
+
+c.KubeSpawner.cpu_guarantee = 0.25
+c.KubeSpawner.cpu_limit = 2.0
+c.KubeSpawner.mem_guarantee = '1G'
+c.KubeSpawner.mem_limit = '4G'
 
 # c.KubeSpawner.uid = int, callable -- user to run container as.
 #     callable: takes KubeSpawner, returns int.
