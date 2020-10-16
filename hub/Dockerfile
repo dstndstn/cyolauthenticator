@@ -88,6 +88,12 @@ COPY cyolauthenticator.py /usr/local/lib/python3.6/dist-packages/cyolauthenticat
 RUN pip install --no-cache-dir wheel && \
     pip install jupyterhub-idle-culler
 
+# HACK -- install Julia on the Jupyterhub node so that we can run "julia"
+# to compile the "IJulia" package in the user's home dir.
+RUN wget -nv https://julialang-s3.julialang.org/bin/linux/x64/1.5/julia-1.5.2-linux-x86_64.tar.gz && \
+     tar xvz -C /usr/local --strip-components 1 -f julia-1.5.2-linux-x86_64.tar.gz && \
+     rm julia-1.5.2-linux-x86_64.tar.gz
+
 # Edit the message in the h1 tags to customize your tutorial
 COPY login.html error.html /usr/local/share/jupyterhub/templates/
 # Replace logo.png with whatever logo you wish to use to brand the server

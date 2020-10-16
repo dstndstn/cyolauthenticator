@@ -49,9 +49,9 @@ c.KubeSpawner.volume_mounts = [
     dict(name='nfs2', mountPath='/nfs/home'),
 ]
 
-c.KubeSpawner.cpu_guarantee = 0.25
-c.KubeSpawner.cpu_limit = 2.0
-c.KubeSpawner.mem_guarantee = '1G'
+c.KubeSpawner.cpu_guarantee = 2.0
+c.KubeSpawner.cpu_limit = 4.0
+c.KubeSpawner.mem_guarantee = '1.8G'
 c.KubeSpawner.mem_limit = '4G'
 
 # c.KubeSpawner.uid = int, callable -- user to run container as.
