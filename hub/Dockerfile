@@ -81,6 +81,13 @@ COPY __init__.py /usr/local/lib/python3.6/dist-packages/cyolauthenticator/__init
 COPY cyolauthenticator.py /usr/local/lib/python3.6/dist-packages/cyolauthenticator/cyolauthenticator.py
 #RUN pip install cyolauthenticator
 
+# would need gcc etc!
+#RUN apt install --no-install-recommends libcurl4-gnutls-dev
+#RUN pip install pycurl
+
+RUN pip install --no-cache-dir wheel && \
+    pip install jupyterhub-idle-culler
+
 # Edit the message in the h1 tags to customize your tutorial
 COPY login.html error.html /usr/local/share/jupyterhub/templates/
 # Replace logo.png with whatever logo you wish to use to brand the server

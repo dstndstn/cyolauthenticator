@@ -39,8 +39,19 @@ c.KubeSpawner.volume_mounts = [
 # c.KubeSpawner.uid = int, callable -- user to run container as.
 #     callable: takes KubeSpawner, returns int.
 # c.KubeSpawner.gid = int, callable
-# c.KubeSpawner.volumes?
-#c.KubeSpawner.volume_mounts, etc
+
+# c.KubeSpawner.cpu_guarantee = Float(None)
+#   Minimum number of cpu-cores a single-user notebook server is guaranteed to have available.
+# c.KubeSpawner.cpu_limit = Float(None)
+#   Maximum number of cpu-cores a single-user notebook server is allowed to use.
+# c.KubeSpawner.mem_guarantee = ByteSpecification(None)
+#   Minimum number of bytes a single-user notebook server is guaranteed to have available.
+#             K -> Kilobytes
+#             M -> Megabytes
+#             G -> Gigabytes
+#             T -> Terabytes
+# c.KubeSpawner.mem_limit = ByteSpecification(None)
+#   Maximum number of bytes a single-user notebook server is allowed to use.
 
 c.KubeSpawner.profile_list = [
     {
