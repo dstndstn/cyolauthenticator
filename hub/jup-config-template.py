@@ -1,5 +1,8 @@
 #import os
 
+c.Authenticator.admin_users = { } #strings
+c.JupyterHub.admin_access = True
+
 c.JupyterHub.authenticator_class = 'cyolauthenticator.CYOLAuthenticator'
 c.JupyterHub.template_paths = ['/jinja/templates']
 
