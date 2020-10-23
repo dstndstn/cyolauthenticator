@@ -29,6 +29,9 @@
 # gcloud container clusters get-credentials your-first-cluster-1 --zone us-central1-a --project research-technologies-testbed
 # kubectl logs jupyterhub-cyol-6b6f84b5f6-6mp2h
 
+# kubectl get pods
+
+
 # kubectl cluster-info
 # kubectl get nodes
 # kubectl run hello-server --image gcr.io/google-samples/hello-app:1.0 --port 8080
@@ -54,6 +57,8 @@
 # ldapsearch -b 'dc=hub' -s base '(objectclass=*)'
 # ldapsearch -Q -LLL -Y EXTERNAL -H ldapi:/// -b cn=config dn
 # ldapsearch -x -LLL -H ldap:/// -b dc=hub dn
+
+ldapdeleteuser <username>
 
 # In workload -> deployment details, add to YAML under spec: containers:
 

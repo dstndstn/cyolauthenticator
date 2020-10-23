@@ -29,6 +29,7 @@ RUN pip install --no-cache-dir setuptools && \
     pip install --no-cache-dir \
     oauthenticator==0.9.0 \
     jupyter==1.0.0 \
+    jupyterhub==1.0.0 \
     python-oauth2==1.1.1 \
     notebook==6.0.2 \
     matplotlib numpy scipy scikit-learn astropy pandas fitsio pyephem \
