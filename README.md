@@ -5,14 +5,14 @@ This branch is a heavily modified version that runs in the Google
 Cloud Platform environment.
 
 The front-end web service runs on a Google Compute Engine VM in a
-docker container (`dstndstn/cyol`), described in the `hub/`
+docker container (`dstndstn/tutorial-server`), described in the `hub/`
 directory.  This includes a persistent disk mounted in `/nfs`, which
 holds user home directories as well as persistent state for the
 service. It also runs an LDAP server, and exports the home directories
 via NFS.
 
 The notebook servers are started on Kubernetes pods, which run the
-`dstndstn/cyol-singleuser` container (in the `singleuser/` directory).
+`dstndstn/tutorial-singleuser` container (in the `singleuser/` directory).
 The notebooks are run as the logged-in user, and the home directory is
 mounted over NFS.
 
@@ -70,18 +70,115 @@ NAME                                        NETWORK  DIRECTION  PRIORITY  ALLOW 
 your-first-cluster-1-to-all-vms-on-network  default  INGRESS    1000      tcp,udp,icmp,esp,ah,sctp        False
 ```
 
+- create the `nfs-home` persistent disk:
+```
+export PROJECT=research-technologies-testbed
+export REGION=us-central1
+export ZONE=$REGION-a
+export CLUSTER=tutorial-cluster
+export HUB_CONTAINER=dstndstn/tutorial-server
+export SINGLEUSER_CONTAINER=dstndstn/tutorial-singleuser
+export SECRET_CODE=Hello
+
+gcloud config set project $PROJECT
+gcloud beta compute disks create nfs-home --type=pd-balanced --size=10GB --project=$PROJECT  --zone=$ZONE
+```
+
+- create the Kubernetes cluster:
+```
+gcloud beta container \
+  --project $PROJECT \
+  clusters create $CLUSTER \
+  --zone $ZONE \
+  --no-enable-basic-auth --cluster-version "1.18.16-gke.302" --release-channel "regular" --machine-type "e2-medium" --image-type "COS" --disk-type "pd-standard" --disk-size "100" --metadata disable-legacy-endpoints=true --scopes "https://www.googleapis.com/auth/devstorage.read_only","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/trace.append" \
+  --num-nodes "3" \
+  --enable-stackdriver-kubernetes --enable-ip-alias \
+  --network "projects/${PROJECT}/global/networks/default" \
+  --subnetwork "projects/${PROJECT}/regions/${REGION}/subnetworks/default" \
+  --default-max-pods-per-node "110" --no-enable-master-authorized-networks --addons HorizontalPodAutoscaling,HttpLoadBalancing,GcePersistentDiskCsiDriver --enable-autoupgrade --enable-autorepair --max-surge-upgrade 1 --max-unavailable-upgrade 0 --enable-shielded-nodes \
+  --node-locations $ZONE
+```
+
 - start the `hub` VM with a command such as (replacing with relevant names for your project):
 ```
-gcloud beta compute --project=research-technologies-testbed instances create-with-container hub \
- --zone=us-central1-a --machine-type=n1-standard-1 --subnet=default --network-tier=PREMIUM \
- --metadata=google-logging-enabled=true --maintenance-policy=MIGRATE \
- --service-account=310980440256-compute@developer.gserviceaccount.com \
- --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
- --tags=hub,http-server --image=cos-stable-77-12371-114-0 --image-project=cos-cloud --boot-disk-size=10GB \
- --boot-disk-type=pd-standard --boot-disk-device-name=hub --disk=name=nfs-home,device-name=nfs-home,mode=rw,boot=no \
- --container-image=dstndstn/cyol --container-restart-policy=always --container-privileged \
- --container-mount-disk=mount-path=/nfs,name=nfs-home,mode=rw --labels=container-vm=cos-stable-77-12371-114-0
-
- --container-image=gcr.io/research-technologies-testbed/cyol
+gcloud beta compute \
+  --project=$PROJECT \
+  instances create-with-container hub \
+  --zone=$ZONE\
+  --machine-type=e2-medium \
+  --subnet=default --network-tier=PREMIUM --metadata=google-logging-enabled=true --maintenance-policy=MIGRATE \
+  --service-account=310980440256-compute@developer.gserviceaccount.com \
+  --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append \
+  --tags=http-server \
+  --image=cos-stable-85-13310-1209-17 --image-project=cos-cloud \
+  --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=hub \
+  --disk=name=nfs-home,device-name=nfs-home,mode=rw,boot=no \
+  --container-image=$HUB_CONTAINER \
+  --container-mount-disk=mount-path=/nfs,name=nfs-home,mode=rw \
+  --container-restart-policy=always --labels=container-vm=cos-stable-85-13310-1209-17 \
+  --container-privileged \
+  --container-env=GCP_PROJECT=$PROJECT \
+  --container-env=GCP_ZONE=$ZONE \
+  --container-env=CLUSTER_NAME=$CLUSTER \
+  --container-env=GOOGLE_APPLICATION_CREDENTIALS=/nfs/sys/svc.json \
+  --container-env=NOTEBOOK_CONTAINER=$SINGLEUSER_CONTAINER \
+  --container-env=TUTORIAL_SECRET_CODE=$SECRET_CODE  
 ```
+
+It can take several minutes for the container to start!  (The VM
+starts faster than that, but it still then takes several minutes for
+the container to start.)
+
+Open up the firewall between the Kubernetes cluster and the Hub VM, and
+open up ports to the Hub machine.  (This need be done only once.  The 
+```
+IP=$(gcloud container clusters describe $CLUSTER --format=get"(clusterIpv4Cidr)" --zone $ZONE)
+NET=$(gcloud container clusters describe $CLUSTER --format=get"(network)" --zone=$ZONE)
+# Delete a previous version, if it exists
+gcloud compute firewall-rules delete --quiet kube-to-all-vms-on-network
+gcloud compute firewall-rules create kube-to-all-vms-on-network --network="$NET" --source-ranges="$IP" --allow=tcp,udp,icmp,esp,ah,sctp
+gcloud compute firewall-rules create allow-2222 --direction=INGRESS --priority=1000 --network="$NET" --action=ALLOW --rules=tcp:2222 --source-ranges=0.0.0.0/0
+gcloud compute firewall-rules create allow-80   --direction=INGRESS --priority=1000 --network="$NET" --action=ALLOW --rules=tcp:80   --source-ranges=0.0.0.0/0
+gcloud compute firewall-rules create allow-443  --direction=INGRESS --priority=1000 --network="$NET" --action=ALLOW --rules=tcp:443  --source-ranges=0.0.0.0/0
+```
+
+
+
+Need to turn on Cloud Resource Manager API:
+
+https://console.cloud.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=research-technologies-testbed
+
+In the startup script, we get:
+```
+ERROR: (gcloud.compute.firewall-rules.create) Could not fetch resource:
+ - Required 'compute.firewalls.create' permission for 'projects/research-technologies-testbed/global/firewalls/allow-2222'
+```
+and I couldn't figure out where to grant that permission...
+
+
+
+To see the logs from an individual user's Jupyter server:
+```
+gcloud container clusters get-credentials tutorial-cluster --zone us-central1-a --project research-technologies-testbed
+kubectl attach jupyter-dustin -c notebook
+```
+
+
+(Extra args the web version claims that are available but 
+--reservation-affinity=any --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring)
+
+
+
+gcloud beta compute --project=research-technologies-testbed
+instances create-with-container hub
+--zone=us-central1-a --machine-type=e2-medium
+--subnet=default --network-tier=PREMIUM --metadata=google-logging-enabled=true --maintenance-policy=MIGRATE
+--service-account=310980440256-compute@developer.gserviceaccount.com
+--scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append
+--tags=http-server --image=cos-stable-85-13310-1209-17 --image-project=cos-cloud
+--boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=hub
+--disk=name=nfs-home,device-name=nfs-home,mode=rw,boot=no
+--no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring --container-image=gcr.io/research-technologies-testbed/cyol --container-restart-policy=always --container-mount-disk=mount-path=/nfs,name=nfs-home,mode=rw --labels=container-vm=cos-stable-85-13310-1209-17 --reservation-affinity=any
+
+
 

@@ -11,6 +11,7 @@ RUN apt update && \
   apt-transport-https ca-certificates git less \
   nfs-server iputils-ping emacs-nox debconf-utils \
   slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch rsyslog \
+  net-tools strace \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Make python3 the default
