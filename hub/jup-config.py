@@ -52,6 +52,27 @@ c.KubeSpawner.profile_list = [
     },
 ]
 
+# For GPUs, you can do, eg:
+#     {
+#         'display_name': 'GPU Jupyter notebook container (Dustin)',
+#         'kubespawner_override': {
+#             'image': 'dstndstn/singleuser-gpu',
+#             'cpu_guarantee': 0.5,
+#             'mem_guarantee': '2G',
+#             'extra_resource_guarantees': {'nvidia.com/gpu': '1'},
+#             'cpu_limit': 0.5,
+#             'mem_limit': '2G',
+#             'extra_resource_limits': {'nvidia.com/gpu': '1'},
+#             'tolerations': [{
+#                          'key': 'nvidia.com/gpu',
+#                          'operator': 'Exists',
+#                          'effect': 'NoSchedule'
+#             }],
+#         },
+#     },
+
+
+
 # https://github.com/nteract/hydrogen/issues/922
 c.NotebookApp.token = 'super$ecret'
 
