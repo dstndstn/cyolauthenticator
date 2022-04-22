@@ -156,29 +156,15 @@ ERROR: (gcloud.compute.firewall-rules.create) Could not fetch resource:
 and I couldn't figure out where to grant that permission...
 
 
+If you want to run Kubernetes nodes with GPUs, you will need to run this magic:
+```
+kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+```
 
 To see the logs from an individual user's Jupyter server:
 ```
 gcloud container clusters get-credentials tutorial-cluster --zone us-central1-a --project research-technologies-testbed
 kubectl attach jupyter-dustin -c notebook
 ```
-
-
-(Extra args the web version claims that are available but 
---reservation-affinity=any --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring)
-
-
-
-gcloud beta compute --project=research-technologies-testbed
-instances create-with-container hub
---zone=us-central1-a --machine-type=e2-medium
---subnet=default --network-tier=PREMIUM --metadata=google-logging-enabled=true --maintenance-policy=MIGRATE
---service-account=310980440256-compute@developer.gserviceaccount.com
---scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/trace.append
---tags=http-server --image=cos-stable-85-13310-1209-17 --image-project=cos-cloud
---boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=hub
---disk=name=nfs-home,device-name=nfs-home,mode=rw,boot=no
---no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring --container-image=gcr.io/research-technologies-testbed/cyol --container-restart-policy=always --container-mount-disk=mount-path=/nfs,name=nfs-home,mode=rw --labels=container-vm=cos-stable-85-13310-1209-17 --reservation-affinity=any
-
-
+(as explained here, https://cloud.google.com/kubernetes-engine/docs/how-to/gpus)
 

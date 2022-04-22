@@ -11,33 +11,58 @@ RUN apt update && apt -yq dist-upgrade && \
     locales \
     fonts-liberation \
     run-one \
-    python3 python3-pip python3-dev \
     openssh-client libssl-dev \
+    python3-pip \
+    python3.8 python3.8-dev \
     gnupg policycoreutils imagemagick curl vim \
     iputils-ping git less \
     patch gcc make libc6-dev \
     nfs-common rpcbind libnss-ldap ldap-utils ldap-auth-config \
     libpam-ldap \
     libbz2-dev \
-    && rm -rf /var/lib/apt/lists/*
+    software-properties-common \
+ && apt clean \
+ && rm -rf /var/lib/apt/lists/*
 
-# Make python3 the default
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
-    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+# Above, python-3 is the python3.6 version, but weirdly required to get-pip w/3.8!
 
-RUN pip install --no-cache-dir setuptools && \
-    pip install --no-cache-dir \
+RUN apt install -y python3.8-distutils && wget https://bootstrap.pypa.io/get-pip.py && \
+  python3.8 get-pip.py
+
+# Make python3.8 the default
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 && \
+    update-alternatives --install /usr/bin/pip pip /usr/local/bin/pip3.8 1
+
+# Add NVIDIA package repositories -- https://www.tensorflow.org/install/gpu
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin \
+ && mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
+ && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub \
+ && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /" \
+ && apt update \
+ && wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
+ && apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
+ && apt update \
+ && apt install -y --no-install-recommends \
+    libnvinfer7 \
+    libnvinfer-plugin7 \
+    cuda-11-0 \
+    libcudnn8 \
+    libcudnn8-dev \
+ && apt clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN python -m pip install --no-cache-dir setuptools && \
+    python -m pip install --no-cache-dir \
     oauthenticator==0.9.0 \
     jupyter==1.0.0 \
     jupyterhub==1.0.0 \
     python-oauth2==1.1.1 \
     notebook==6.0.2 \
-    matplotlib numpy scipy scikit-learn astropy pandas fitsio pyephem \
-    asdf h5py emcee corner cython
+    matplotlib numpy scipy scikit-learn asdf h5py cython
+RUN python -m pip install --no-cache-dir tensorflow
 
-RUN wget -nv https://julialang-s3.julialang.org/bin/linux/x64/1.5/julia-1.5.2-linux-x86_64.tar.gz && \
-     tar xvz -C /usr/local --strip-components 1 -f julia-1.5.2-linux-x86_64.tar.gz && \
-     rm julia-1.5.2-linux-x86_64.tar.gz
+
+# Jupyterhub / Google cloud setup
 
 COPY nsswitch.conf /etc
 COPY etcldap.conf /etc/ldap.conf
