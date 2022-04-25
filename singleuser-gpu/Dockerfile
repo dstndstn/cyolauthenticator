@@ -24,6 +24,9 @@ RUN apt update && apt -yq dist-upgrade && \
  && apt clean \
  && rm -rf /var/lib/apt/lists/*
 
+# Add:
+# htop
+
 # Above, python-3 is the python3.6 version, but weirdly required to get-pip w/3.8!
 
 RUN apt install -y python3.8-distutils && wget https://bootstrap.pypa.io/get-pip.py && \
@@ -32,26 +35,6 @@ RUN apt install -y python3.8-distutils && wget https://bootstrap.pypa.io/get-pip
 # Make python3.8 the default
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1 && \
     update-alternatives --install /usr/bin/pip pip /usr/local/bin/pip3.8 1
-
-# # Add NVIDIA package repositories -- https://www.tensorflow.org/install/gpu
-# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin \
-#  && mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-#  && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub \
-#  && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /" \
-#  && apt update \
-#  && wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
-#  && apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
-#  && apt update \
-#  && apt install -y --no-install-recommends \
-#     libnvinfer7 \
-#     libnvinfer-plugin7 \
-#     cuda-11-0 \
-#     libcudnn8 \
-#     libcudnn8-dev \
-#  && apt clean \
-#  && rm -rf /var/lib/apt/lists/*
-
-
 
 RUN python -m pip install --no-cache-dir setuptools && \
     python -m pip install --no-cache-dir \
@@ -117,32 +100,3 @@ ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda-11.6/lib64
 
 RUN rm /usr/bin/python3 && \
   ln -s /usr/bin/python3.8 /usr/bin/python3
-
-# htop
-
-
-# # Add NVIDIA package repositories -- https://www.tensorflow.org/install/gpu
-# RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin \
-#  && mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600 \
-#  && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub \
-#  && add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /" \
-#  && apt update \
-#  && wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
-#  && apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
-#  && apt update
-# 
-# RUN apt install -y --no-install-recommends \
-#   cuda-cudart-11-6 \
-#   cuda-nvrtc-11-6 \
-#   libcudnn8 \
-#   libcudnn8-dev
-# ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda-11.6/lib64
-# RUN apt install -y --no-install-recommends \
-#   libnvinfer7 \
-#   libnvinfer-plugin7
-# RUN apt install -y --no-install-recommends \
-#   libcufft-11-6 \
-#   libcurand-11-6 \
-#   libcusolver-11-6 \
-#   libcusparse-11-6
-
