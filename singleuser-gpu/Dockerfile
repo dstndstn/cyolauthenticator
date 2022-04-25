@@ -84,3 +84,7 @@ CMD ["start-notebook.sh"]
 COPY start-notebook.sh /usr/local/bin/
 COPY start-singleuser.sh /usr/local/bin/
 COPY jupyter_notebook_config.py /etc/jupyter/
+
+RUN apt update
+RUN apt remove -y nvidia-utils-510
+RUN apt install -y nvidia-utils-450

@@ -161,6 +161,11 @@ If you want to run Kubernetes nodes with GPUs, you will need to run this magic:
 kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
 ```
 
+Note also that if you run a node pool containing GPUs as well as a regular node pool,
+then GKE will "taint" the GPU nodes so that regular pods (not requesting GPU resources)
+will NOT run on the GPU nodes.  This includes all the Kubernetes system pods like DNS,
+so you MUST keep at least one regular node running!
+
 To see the logs from an individual user's Jupyter server:
 ```
 gcloud container clusters get-credentials tutorial-cluster --zone us-central1-a --project research-technologies-testbed
