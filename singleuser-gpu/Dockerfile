@@ -87,3 +87,190 @@ COPY jupyter_notebook_config.py /etc/jupyter/
 # Google mounts the NVIDIA drivers already!  In /usr/local/nvidia
 ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda-11.6/lib64
 ENV PATH=${PATH}:/usr/local/nvidia/bin
+
+
+# From https://bitbucket.org/eschnett/cactusamrex/src/master/azure-pipelines/Dockerfile.cuda
+
+RUN mkdir /cactus
+WORKDIR /cactus
+
+RUN apt update && \
+  apt install -yq --no-install-recommends \
+    build-essential \
+    g++ \
+    gfortran \
+    hdf5-tools \
+    libboost-all-dev \
+    libfftw3-dev \
+    libgsl-dev \
+    libhdf5-dev \
+    libhwloc-dev \
+    libopenblas-dev \
+    libopenmpi-dev \
+    libpetsc-real-dev \
+    libudev-dev \
+    perl \
+    pkg-config \
+    python2 \
+    python3-requests \
+    rsync \
+    subversion \
+    vim \
+    zlib1g-dev \
+    && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install cmake
+# We need a modern cmake to build AMReX
+RUN mkdir dist && \
+  (cd dist && \
+  wget https://github.com/Kitware/CMake/releases/download/v3.21.2/cmake-3.21.2-linux-x86_64.tar.gz && \
+  tar xzf cmake-3.21.2-linux-x86_64.tar.gz && \
+  rsync -r cmake-3.21.2-linux-x86_64/ /usr/local && \
+  true) && \
+  rm -rf dist
+
+# Install ADIOS2
+# ADIOS2 is a parallel I/O library, comparable to HDF5
+RUN mkdir src && \
+  (cd src && \
+  wget https://github.com/ornladios/ADIOS2/archive/refs/tags/v2.7.1.tar.gz && \
+  tar xzf v2.7.1.tar.gz && \
+  cd ADIOS2-2.7.1 && \
+  mkdir build && \
+  cd build && \
+  cmake .. && \
+  make -j$(nproc) && \
+  make -j$(nproc) install && \
+  true) && \
+  rm -rf src
+
+# Install NSIMD
+# NSIMD allows writing explicitly SIMD-vectorized code
+# Note: This assumes that the system has x86_64 CPUs with AVX2
+RUN mkdir src && \
+    (cd src && \
+    wget https://github.com/agenium-scale/nsimd/archive/refs/tags/v3.0.1.tar.gz && \
+    tar xzf v3.0.1.tar.gz && \
+    cd nsimd-3.0.1 && \
+    mkdir build && \
+    cd build && \
+    cmake \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_C_COMPILER=gcc \
+        -DCMAKE_CXX_COMPILER=g++ \
+        -Dsimd=AVX2 \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        .. && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    true) && \
+    rm -rf src
+
+# Install openPMD-api
+# openPMD-api defines a standard for laying out AMR data in a file
+# - Depends on ADIOS2
+RUN mkdir src && \
+    (cd src && \
+    wget https://github.com/openPMD/openPMD-api/archive/refs/tags/0.14.4.tar.gz && \
+    tar xzf 0.14.4.tar.gz && \
+    cd openPMD-api-0.14.4 && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    true) && \
+    rm -rf src
+
+RUN apt update && apt install -y --no-install-recommends \
+    file \
+  && apt clean \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Silo
+# openPMD-api defines a standard for laying out AMR data in a file
+RUN mkdir src && \
+    (cd src && \
+    wget https://github.com/LLNL/Silo/releases/download/v4.11/silo-4.11.tar.gz && \
+    tar xzf silo-4.11.tar.gz && \
+    cd silo-4.11 && \
+    mkdir build && \
+    cd build && \
+    ../configure \
+        --disable-fortran \
+        --enable-optimization \
+        --with-hdf5=/usr/lib/x86_64-linux-gnu/hdf5/serial/include,/usr/lib/x86_64-linux-gnu/hdf5/serial/lib \
+        --prefix=/usr/local && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    true) && \
+    rm -rf src
+
+# Install ssht
+# ssht provides spin-weighted spherical harmonicsa
+RUN mkdir src && \
+    (cd src && \
+    wget https://github.com/astro-informatics/ssht/archive/v1.5.1.tar.gz && \
+    tar xzf v1.5.1.tar.gz && \
+    cd ssht-1.5.1 && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    true) && \
+    rm -rf src
+
+# Install yaml-cpp
+# yaml-cpp allows reading and writing YAML files
+RUN mkdir src && \
+    (cd src && \
+    wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.3.tar.gz && \
+    tar xzf yaml-cpp-0.6.3.tar.gz && \
+    cd yaml-cpp-yaml-cpp-0.6.3 && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    true) && \
+    rm -rf src
+
+RUN apt update \
+  && apt remove -y \
+    cuda-nvrtc-11-1 \
+  && apt install -y --no-install-recommends \
+    cuda-nvcc-11-6 \
+    cuda-nvrtc-11-6 \
+    cuda-nvprof-11-6 \
+    libcurand-dev-11-6 \
+  && apt clean \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV PATH=${PATH}:/usr/local/cuda/bin
+
+# Install AMReX
+# AMReX provides adaptive mesh refinement
+# - Enable Fortran for `docker/Dockerfile`
+# - Keep AMReX source tree around for debugging
+# - Install this last because it changes most often
+# - Optimize AMReX, since otherwise CUDA code generation takes too long
+RUN mkdir src && \
+    (cd src && \
+    wget https://github.com/AMReX-Codes/amrex/archive/22.04.tar.gz && \
+    tar xzf 22.04.tar.gz && \
+    cd amrex-22.04 && \
+    mkdir build && \
+    cd build && \
+    cmake \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DAMReX_GPU_BACKEND=CUDA \
+        -DAMReX_CUDA_ARCH=7.5 \
+        -DAMReX_OMP=ON \
+        -DAMReX_PARTICLES=ON \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        .. && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    true)
