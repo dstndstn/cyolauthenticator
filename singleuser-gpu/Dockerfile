@@ -274,3 +274,7 @@ RUN mkdir src && \
     make -j$(nproc) && \
     make -j$(nproc) install && \
     true)
+
+RUN pip install --no-cache-dir \
+    jupyterlab
+ENV JUPYTER_ENABLE_LAB=1
