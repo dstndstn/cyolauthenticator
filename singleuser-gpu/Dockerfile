@@ -2,8 +2,9 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && apt -yq dist-upgrade && \
-    apt install -yq --no-install-recommends apt-utils && \
-    apt install -yq --no-install-recommends \
+  apt install -yq --no-install-recommends \
+    apt-utils && \
+  apt install -yq --no-install-recommends \
     htop \
     wget \
     bzip2 \
@@ -12,30 +13,76 @@ RUN apt update && apt -yq dist-upgrade && \
     locales \
     fonts-liberation \
     run-one \
-    openssh-client libssl-dev \
-    python3-pip \
-    python3.8 python3.8-dev \
-    gnupg policycoreutils imagemagick curl vim \
-    iputils-ping git less \
-    patch gcc make libc6-dev \
-    nfs-common rpcbind libnss-ldap ldap-utils ldap-auth-config \
+    openssh-client \
+    libssl-dev \
+    python3.8-pip \
+    python3.8 \
+    python3.8-dev \
+    gnupg \
+    policycoreutils \
+    imagemagick \
+    curl \
+    vim \
+    nano \
+    iputils-ping \
+    git \
+    less \
+    patch \
+    gcc \
+    make \
+    libc6-dev \
+    nfs-common \
+    rpcbind \
+    libnss-ldap \
+    ldap-utils \
+    ldap-auth-config \
     libpam-ldap \
     libbz2-dev \
     software-properties-common \
+    \ # from Erik's https://bitbucket.org/eschnett/cactusamrex/src/master/azure-pipelines/Dockerfile.cuda
+    build-essential \
+    file \
+    g++ \
+    gfortran \
+    hdf5-tools \
+    libboost-all-dev \
+    libfftw3-dev \
+    libgsl-dev \
+    libhdf5-dev \
+    libhwloc-dev \
+    libopenblas-dev \
+    libopenmpi-dev \
+    libpetsc-real-dev \
+    libudev-dev \
+    perl \
+    pkg-config \
+    rsync \
+    subversion \
+    zlib1g-dev \
  && apt clean \
  && rm -rf /var/lib/apt/lists/*
 
 # Make python3.8 the default
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 1
 
-RUN python -m pip install --no-cache-dir setuptools && \
-    python -m pip install --no-cache-dir \
+RUN python -m pip install --no-cache-dir \
+    setuptools && \
+  python -m pip install --no-cache-dir \
+    \ # exact versions to match what is on the "hub" server
     oauthenticator==0.9.0 \
     jupyter==1.0.0 \
     jupyterhub==1.0.0 \
     python-oauth2==1.1.1 \
     notebook==6.0.2 \
-    matplotlib numpy scipy scikit-learn asdf h5py cython
+    jupyterlab \
+    matplotlib \
+    numpy \
+    scipy \
+    scikit-learn \
+    asdf \
+    h5py \
+    cython \
+    requests
 RUN python -m pip install --no-cache-dir tensorflow
 
 # Add NVIDIA package repositories -- https://www.tensorflow.org/install/gpu
@@ -48,18 +95,25 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86
  && apt install -y ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb \
  && apt update \
  && apt install -y --no-install-recommends \
-  cuda-cudart-11-6 \
-  cuda-nvrtc-11-6 \
-  libcufft-11-6 \
-  libcurand-11-6 \
-  libcusolver-11-6 \
-  libcusparse-11-6 \
+  cuda-cudart-11-5 \
+  cuda-nvrtc-11-5 \
+  cuda-nvcc-11-5 \
+  cuda-nvprof-11-6 \
+  libcufft-11-5 \
+  libcurand-11-5 \
+  libcurand-dev-11-6 \
+  libcusolver-11-5 \
+  libcusparse-11-5 \
   libcudnn8 \
   libcudnn8-dev \
   libnvinfer7 \
   libnvinfer-plugin7 \
  && apt clean \
- && rm -rf /var/lib/apt/lists/*
+&& rm -rf /var/lib/apt/lists/*
+
+#RUN apt update \
+#  && apt remove -y \
+#    cuda-nvrtc-11-1 \
 
 # Jupyterhub / Google cloud setup
 
@@ -84,41 +138,26 @@ COPY start-notebook.sh /usr/local/bin/
 COPY start-singleuser.sh /usr/local/bin/
 COPY jupyter_notebook_config.py /etc/jupyter/
 
+ENV JUPYTER_ENABLE_LAB=1
+
 # Google mounts the NVIDIA drivers already!  In /usr/local/nvidia
-ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda-11.6/lib64
-ENV PATH=${PATH}:/usr/local/nvidia/bin
+ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda-11.6/lib64 \
+    PATH=${PATH}:/usr/local/nvidia/bin:/usr/local/cuda/bin
 
 
-# From https://bitbucket.org/eschnett/cactusamrex/src/master/azure-pipelines/Dockerfile.cuda
 
-RUN mkdir /cactus
-WORKDIR /cactus
 
-RUN apt update && \
-  apt install -yq --no-install-recommends \
-    build-essential \
-    g++ \
-    gfortran \
-    hdf5-tools \
-    libboost-all-dev \
-    libfftw3-dev \
-    libgsl-dev \
-    libhdf5-dev \
-    libhwloc-dev \
-    libopenblas-dev \
-    libopenmpi-dev \
-    libpetsc-real-dev \
-    libudev-dev \
-    perl \
-    pkg-config \
-    python2 \
-    python3-requests \
-    rsync \
-    subversion \
-    vim \
-    zlib1g-dev \
-    && \
-    rm -rf /var/lib/apt/lists/*
+
+
+
+
+
+
+
+
+
+
+
 
 # Install cmake
 # We need a modern cmake to build AMReX
@@ -183,11 +222,6 @@ RUN mkdir src && \
     true) && \
     rm -rf src
 
-RUN apt update && apt install -y --no-install-recommends \
-    file \
-  && apt clean \
-  && rm -rf /var/lib/apt/lists/*
-
 # Install Silo
 # openPMD-api defines a standard for laying out AMR data in a file
 RUN mkdir src && \
@@ -237,19 +271,6 @@ RUN mkdir src && \
     true) && \
     rm -rf src
 
-RUN apt update \
-  && apt remove -y \
-    cuda-nvrtc-11-1 \
-  && apt install -y --no-install-recommends \
-    cuda-nvcc-11-6 \
-    cuda-nvrtc-11-6 \
-    cuda-nvprof-11-6 \
-    libcurand-dev-11-6 \
-  && apt clean \
-  && rm -rf /var/lib/apt/lists/*
-
-ENV PATH=${PATH}:/usr/local/cuda/bin
-
 # Install AMReX
 # AMReX provides adaptive mesh refinement
 # - Enable Fortran for `docker/Dockerfile`
@@ -275,6 +296,3 @@ RUN mkdir src && \
     make -j$(nproc) install && \
     true)
 
-RUN pip install --no-cache-dir \
-    jupyterlab
-ENV JUPYTER_ENABLE_LAB=1
