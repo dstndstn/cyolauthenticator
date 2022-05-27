@@ -187,6 +187,7 @@ def mkuser(user, passw, passw2, code_check):
     pipe.stdin.close()
     pipe.wait()
 
+    call(["/inituser-root.sh",user])
     call(["su","-",user,"-c","bash /inituser.sh"])
 
     # pipe = Popen(["chpasswd"],stdin=PIPE,universal_newlines=True)

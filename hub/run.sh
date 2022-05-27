@@ -110,6 +110,7 @@ rm /tmp/slappasswd
 
 # Enable user quotas
 mount -o remount,usrquota /nfs
+quotaon -v /nfs
 
 for ((;;)); do
   # If we have a certificate directory...

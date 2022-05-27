@@ -107,7 +107,7 @@ COPY login.html error.html /usr/local/share/jupyterhub/templates/
 # Replace logo.png with whatever logo you wish to use to brand the server
 COPY pi-logo.png /usr/local/share/jupyterhub/static/images/logo.png
 
-COPY run.sh run-log.sh inituser.sh jup-config.py jup-config-template.py /
+COPY run.sh run-log.sh inituser.sh inituser-root.sh jup-config.py jup-config-template.py /
 RUN chmod 755 /*.sh
 COPY codeword.txt /usr/enable_mkuser
 RUN echo "/nfs/home 10.0.0.0/8(rw,async,no_subtree_check,root_squash)" > /etc/exports
