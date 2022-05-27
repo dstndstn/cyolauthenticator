@@ -108,6 +108,9 @@ else
 fi
 rm /tmp/slappasswd
 
+# Enable user quotas
+mount -o remount,usrquota /nfs
+
 for ((;;)); do
   # If we have a certificate directory...
   if [ -d /etc/pki/tls/certs/tutorial.cer ]; then
@@ -118,3 +121,4 @@ for ((;;)); do
   jupyterhub --port $PORT -f jup-config.py >> jupyterhub.log 2>&1
   sleep 5
 done
+

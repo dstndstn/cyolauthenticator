@@ -1,4 +1,5 @@
-FROM ubuntu:18.04
+#FROM ubuntu:18.04
+FROM ubuntu:20.04
 USER root
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -6,17 +7,21 @@ RUN apt update && \
   apt install -y --no-install-recommends apt-utils && \
   apt install -y --no-install-recommends \
   python3 python3-pip openssh-client \
-  libssl1.0-dev nodejs-dev node-gyp npm \
+  node-gyp npm \
   gnupg policycoreutils python3-pam imagemagick curl vim wget \
   apt-transport-https ca-certificates git less \
   nfs-server iputils-ping emacs-nox debconf-utils \
   slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch rsyslog \
-  net-tools strace \
+  net-tools strace sudo \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+#libssl1.0-dev nodejs-dev
 
 # Make python3 the default
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1 && \
     update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+#RUN python -m pip install --upgrade pip
 
 # Jupyterhub is a little picky about matching specific versions between
 # the jupyterhub process and the notebook servers.
@@ -30,6 +35,8 @@ RUN pip install --no-cache-dir setuptools && \
     jupyterhub-dummyauthenticator \
     notebook==6.0.2 \
     kubernetes==9.0.1
+
+#RUN npm install -g npm@latest
 
 # For jupyterhub
 RUN npm install -g configurable-http-proxy
@@ -77,9 +84,9 @@ COPY etcldap.conf /etc/ldap.conf
 COPY ldapscripts.conf /etc/ldapscripts
 COPY add_content.ldif /tmp
 
-RUN mkdir -p /usr/local/lib/python3.6/dist-packages/cyolauthenticator
-COPY __init__.py /usr/local/lib/python3.6/dist-packages/cyolauthenticator/__init__.py
-COPY cyolauthenticator.py /usr/local/lib/python3.6/dist-packages/cyolauthenticator/cyolauthenticator.py
+RUN mkdir -p /usr/local/lib/python3.8/dist-packages/cyolauthenticator
+COPY __init__.py /usr/local/lib/python3.8/dist-packages/cyolauthenticator/__init__.py
+COPY cyolauthenticator.py /usr/local/lib/python3.8/dist-packages/cyolauthenticator/cyolauthenticator.py
 #RUN pip install cyolauthenticator
 
 # would need gcc etc!
@@ -89,11 +96,11 @@ COPY cyolauthenticator.py /usr/local/lib/python3.6/dist-packages/cyolauthenticat
 RUN pip install --no-cache-dir wheel && \
     pip install jupyterhub-idle-culler
 
-# HACK -- install Julia on the Jupyterhub node so that we can run "julia"
-# to compile the "IJulia" package in the user's home dir.
-RUN wget -nv https://julialang-s3.julialang.org/bin/linux/x64/1.5/julia-1.5.2-linux-x86_64.tar.gz && \
-     tar xvz -C /usr/local --strip-components 1 -f julia-1.5.2-linux-x86_64.tar.gz && \
-     rm julia-1.5.2-linux-x86_64.tar.gz
+# # HACK -- install Julia on the Jupyterhub node so that we can run "julia"
+# # to compile the "IJulia" package in the user's home dir.
+# RUN wget -nv https://julialang-s3.julialang.org/bin/linux/x64/1.5/julia-1.5.2-linux-x86_64.tar.gz && \
+#      tar xvz -C /usr/local --strip-components 1 -f julia-1.5.2-linux-x86_64.tar.gz && \
+#      rm julia-1.5.2-linux-x86_64.tar.gz
 
 # Edit the message in the h1 tags to customize your tutorial
 COPY login.html error.html /usr/local/share/jupyterhub/templates/
@@ -107,7 +114,7 @@ RUN echo "/nfs/home 10.0.0.0/8(rw,async,no_subtree_check,root_squash)" > /etc/ex
 
 ## Error JSONifying event causes spawn to fail
 COPY jupyterhub.patch /
-RUN cat jupyterhub.patch | (cd /usr/local/lib/python3.6/dist-packages && patch -p 1)
+RUN cat jupyterhub.patch | (cd /usr/local/lib/python3.8/dist-packages && patch -p 1)
 
 COPY nfs-pv.yaml nfs-pvc.yaml /
 
@@ -122,3 +129,7 @@ EXPOSE 20048/tcp
 
 CMD bash run-log.sh
 
+RUN apt update && \
+    apt install -y quota && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+#mount -o remount,usrquota /nfs
