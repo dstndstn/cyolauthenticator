@@ -118,6 +118,11 @@ RUN cat jupyterhub.patch | (cd /usr/local/lib/python3.8/dist-packages && patch -
 
 COPY nfs-pv.yaml nfs-pvc.yaml /
 
+# Jupyterhub configuration for nginx + certbot
+# I ran: "certbot -d et2022uidaho.ncsa.illinois.edu --nginx" to get cert
+COPY nginx-jhub.conf /etc/nginx/sites-available
+RUN  ln -s ../sites-available/nginx-jhub.conf /etc/nginx/sites-enabled
+
 # This list of EXPOSEd ports is not complete (and not required when running in Google Compute Engine)
 EXPOSE 80
 EXPOSE 8081

@@ -112,14 +112,18 @@ rm /tmp/slappasswd
 mount -o remount,usrquota /nfs
 quotaon -v /nfs
 
+service nginx start
+
 for ((;;)); do
-  # If we have a certificate directory...
-  if [ -d /etc/pki/tls/certs/tutorial.cer ]; then
-      PORT=443
-  else
-      PORT=80
-  fi
-  jupyterhub --port $PORT -f jup-config.py >> jupyterhub.log 2>&1
+  # # If we have a certificate directory...
+  # if [ -d /etc/pki/tls/certs/tutorial.cer ]; then
+  #     PORT=443
+  # else
+  #     PORT=80
+  # fi
+  # jupyterhub --port $PORT -f jup-config.py >> jupyterhub.log 2>&1
+  service nginx restart
+  jupyterhub -f jup-config.py >> jupyterhub.log 2>&1
   sleep 5
 done
 
