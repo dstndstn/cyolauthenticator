@@ -12,7 +12,7 @@ RUN apt update && \
   apt-transport-https ca-certificates git less \
   nfs-server iputils-ping emacs-nox debconf-utils \
   slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch rsyslog \
-  net-tools strace sudo \
+  net-tools strace sudo certbot nginx \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 #libssl1.0-dev nodejs-dev
@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir setuptools && \
     pip install --no-cache-dir \
     oauthenticator==0.9.0 \
     jupyter==1.0.0 \
-    jupyterhub==1.0.0 \
+    jupyterhub \
     tornado==5.1.1 \
     python-oauth2==1.1.1 \
     jupyterhub-dummyauthenticator \
