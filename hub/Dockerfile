@@ -12,7 +12,7 @@ RUN apt update && \
   apt-transport-https ca-certificates git less \
   nfs-server iputils-ping emacs-nox debconf-utils \
   slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch rsyslog \
-  net-tools strace sudo certbot nginx \
+  net-tools strace sudo certbot nginx quota \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 #libssl1.0-dev nodejs-dev
@@ -129,7 +129,3 @@ EXPOSE 20048/tcp
 
 CMD bash run-log.sh
 
-RUN apt update && \
-    apt install -y quota && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-#mount -o remount,usrquota /nfs
