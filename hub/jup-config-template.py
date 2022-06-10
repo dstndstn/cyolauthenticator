@@ -1,6 +1,4 @@
-#import os
-
-c.Authenticator.admin_users = { } #strings
+c.Authenticator.admin_users = []
 c.JupyterHub.admin_access = True
 
 c.JupyterHub.authenticator_class = 'cyolauthenticator.CYOLAuthenticator'
@@ -8,6 +6,9 @@ c.JupyterHub.template_paths = ['/jinja/templates']
 
 # eg from https://github.com/GoogleCloudPlatform/gke-jupyter-classroom/blob/master/jupyterhub/jupyterhub_config.py
 c.JupyterHub.hub_ip = '0.0.0.0'
+
+# Bind on localhost -- nginx proxies for us
+c.JupyterHub.bind_url = 'http://127.0.0.1:8000'
 
 # Cull idle users -- for this to really work, also need client-side auto-shutdown
 c.JupyterHub.services = [
@@ -93,10 +94,11 @@ c.NotebookApp.token = 'super$ecret'
 # openssl genrsa -out rootCA.key 2048
 # openssl req -x509 -new -nodes -key rootCA.key -sha256 -days 1024 -out rootCA.pem
 
-import os
-if os.path.exists('/etc/pki/tls/certs/tutorial.cer'):
-    c.JupyterHub.ssl_cert = '/etc/pki/tls/certs/tutorial.cer'
-    c.JupyterHub.ssl_key =  '/etc/pki/tls/private/tutorial.key'
+# Nginx does SSL termination for us
+# import os
+# if os.path.exists('/etc/pki/tls/certs/tutorial.cer'):
+#     c.JupyterHub.ssl_cert = '/etc/pki/tls/certs/tutorial.cer'
+#     c.JupyterHub.ssl_key =  '/etc/pki/tls/private/tutorial.key'
 
 # Uncomment if needed
 #c.JupyterHub.base_url = '/somename/'
