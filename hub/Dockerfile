@@ -12,7 +12,7 @@ RUN apt update && \
   apt-transport-https ca-certificates git less \
   nfs-server iputils-ping emacs-nox debconf-utils \
   slapd ldap-utils ldapscripts libnss-ldap libpam-ldap patch rsyslog \
-  net-tools strace sudo certbot nginx quota \
+  net-tools strace sudo certbot nginx quota htop lsof iotop \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 #libssl1.0-dev nodejs-dev
@@ -34,7 +34,9 @@ RUN pip install --no-cache-dir setuptools && \
     python-oauth2==1.1.1 \
     jupyterhub-dummyauthenticator \
     notebook==6.0.2 \
-    kubernetes==9.0.1
+    kubernetes==9.0.1 \
+    wheel \
+    jupyterhub-idle-culler
 
 #RUN npm install -g npm@latest
 
@@ -92,9 +94,6 @@ COPY cyolauthenticator.py /usr/local/lib/python3.8/dist-packages/cyolauthenticat
 # would need gcc etc!
 #RUN apt install --no-install-recommends libcurl4-gnutls-dev
 #RUN pip install pycurl
-
-RUN pip install --no-cache-dir wheel && \
-    pip install jupyterhub-idle-culler
 
 # # HACK -- install Julia on the Jupyterhub node so that we can run "julia"
 # # to compile the "IJulia" package in the user's home dir.
