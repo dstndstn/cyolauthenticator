@@ -129,42 +129,41 @@ It can take several minutes for the container to start!  (The VM
 starts faster than that, but it still then takes several minutes for
 the container to start.)
 
-Open up the firewall between the Kubernetes cluster and the Hub VM, and
-open up ports to the Hub machine.  (This need be done only once.  The 
-```
-IP=$(gcloud container clusters describe $CLUSTER --format=get"(clusterIpv4Cidr)" --zone $ZONE)
-NET=$(gcloud container clusters describe $CLUSTER --format=get"(network)" --zone=$ZONE)
-# Delete a previous version, if it exists
-gcloud compute firewall-rules delete --quiet kube-to-all-vms-on-network
-gcloud compute firewall-rules create kube-to-all-vms-on-network --network="$NET" --source-ranges="$IP" --allow=tcp,udp,icmp,esp,ah,sctp
-gcloud compute firewall-rules create allow-2222 --direction=INGRESS --priority=1000 --network="$NET" --action=ALLOW --rules=tcp:2222 --source-ranges=0.0.0.0/0
-gcloud compute firewall-rules create allow-80   --direction=INGRESS --priority=1000 --network="$NET" --action=ALLOW --rules=tcp:80   --source-ranges=0.0.0.0/0
-gcloud compute firewall-rules create allow-443  --direction=INGRESS --priority=1000 --network="$NET" --action=ALLOW --rules=tcp:443  --source-ranges=0.0.0.0/0
-```
-
-
-
 Need to turn on Cloud Resource Manager API:
 
 https://console.cloud.google.com/apis/api/cloudresourcemanager.googleapis.com/overview?project=research-technologies-testbed
 
-In the startup script, we get:
-```
-ERROR: (gcloud.compute.firewall-rules.create) Could not fetch resource:
- - Required 'compute.firewalls.create' permission for 'projects/research-technologies-testbed/global/firewalls/allow-2222'
-```
-and I couldn't figure out where to grant that permission...
 
-
-If you want to run Kubernetes nodes with GPUs, you will need to run this magic:
+If you want to run Kubernetes nodes with GPUs, you will need to run this magical daemonset that loads the NVIDIA drivers when
+a node starts.
 ```
 kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
+```
+
+If you want to auto-scale your GPU node pool, you must do this (but
+set `--max-cpu` and `--max-memory` (in GB) for your setup).
+
+```
+gcloud container clusters update cluster \
+  --enable-autoprovisioning \
+  --autoprovisioning-scopes=https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring,https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/compute \
+  --max-cpu 100 --max-memory 375
 ```
 
 Note also that if you run a node pool containing GPUs as well as a regular node pool,
 then GKE will "taint" the GPU nodes so that regular pods (not requesting GPU resources)
 will NOT run on the GPU nodes.  This includes all the Kubernetes system pods like DNS,
 so you MUST keep at least one regular node running!
+
+To pre-pull your Docker images when nodes start up, please see the
+`hub/image-pull-cpu.yaml` and `hub/image-pull-gpu.yaml` files, which
+are daemonsets that can be used via:
+```
+kubectl apply -f image-pull-cpu.yaml
+kubectl apply -f image-pull-gpu.yaml
+```
+Note that the image names to pull are hard-coded in these files!
+
 
 To see the logs from an individual user's Jupyter server:
 ```
